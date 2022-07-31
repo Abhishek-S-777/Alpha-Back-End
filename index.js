@@ -17,8 +17,23 @@ app.use(bodyparser.urlencoded({
 const multer = require("multer");
 
 const storage = multer.diskStorage({
+    destination: function (req, file, cb) 
+    {
+        if(file.fieldname === "cover_image"){
+            cb(null, './uploads')
+        }
+        else if(file.fieldname === "song_file"){
+            cb(null, './uploads/audios')
+        }
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    //   cb(null, uuid.v4() + path.extname(file.originalname));
+    }
+})
+const storage2 = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, './uploads')
+      cb(null, './uploads/audio')
     },
     filename: function (req, file, cb) {
         cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
@@ -27,6 +42,7 @@ const storage = multer.diskStorage({
 })
   
 const upload = multer({ storage: storage })
+const upload2 = multer({ storage: storage2 })
 
 // const upload = multer({ dest: "uploads/" });
 
@@ -66,16 +82,27 @@ app.get('/cover_art',(req,res)=>{
 
 // Add new song..
 // Insert into song_base table
-app.post('/song_base', upload.single("cover_image"),(req,res)=>{
+app.post('/song_base',upload.fields(
+    [
+        {name: 'cover_image', maxCount: 1}, 
+        {name: 'song_file', maxCount: 1}
+    ]),(req,res)=>{
+    console.log("Index js line 86",req.body);
     let song_name = req.body.songname;
     let release_date = req.body.dateofrelease;
-    let filepath = req.file.path;
-    let newFilePath = filepath.split('\\').join('/');
+    // let filepath = "hsdfhjkds\\";
+    let fileCoverPath = req.files.cover_image[0].path;
+    let newCoverFilePath = fileCoverPath.split('\\').join('/');
+
+    let songPath = req.files.song_file[0].path;
+    let newSongPath = songPath.split('\\').join('/');
+
+    console.log("New Song path",newSongPath)
+    console.log("New cover path",newCoverFilePath)
     let base = __dirname.split('\\').join('/');
 
-    console.log(req.body);
     
-    let query = `insert into song_base(song_name, release_date, cover_image, average_rating) values ('${song_name}', '${release_date}', '${newFilePath}', 0)`
+    let query = `insert into song_base(song_name, release_date, cover_image, audio, average_rating) values ('${song_name}', '${release_date}', '${newCoverFilePath}', '${newSongPath}', 0)`
 
     db.query(query,(err,result)=>{
         console.log(err)
@@ -92,6 +119,33 @@ app.post('/song_base', upload.single("cover_image"),(req,res)=>{
      })
 
 })
+// app.post('/song_base',upload.single("cover_image"),(req,res)=>{
+//     console.log("Index js line 86",req.body);
+//     let song_name = req.body.songname;
+//     let release_date = req.body.dateofrelease;
+//     // let filepath = "hsdfhjkds\\";
+//     let filepath = req.file.path;
+//     let newFilePath = filepath.split('\\').join('/');
+//     let base = __dirname.split('\\').join('/');
+
+    
+//     let query = `insert into song_base(song_name, release_date, cover_image, average_rating) values ('${song_name}', '${release_date}', '${newFilePath}', 0)`
+
+//     db.query(query,(err,result)=>{
+//         console.log(err)
+//         console.log(result)
+//         if(err){
+//             console.log(err)
+//         }
+//         else{
+//             res.send({
+//                 message: "Data inserted Successfully",
+//                 data: result
+//             })
+//         }
+//      })
+
+// })
 
 // Get all songs from song_base table..
 app.get('/song_base',(req,res)=>{
@@ -278,7 +332,7 @@ app.get('/artist_inner_join',(req,res)=>{
 // Signup function..
 app.post('/user_base', (req,res)=>{
     // console.log("User sign up called ")
-    let query = `insert into user_base(uname, uemail, upassword) values ('${req.body.uname}', '${req.body.uemail}', '${req.body.upwd}')`
+    let query = `insert into user_base(uname, uemail, upassword) values ('${req.body.uname}', '${req.body.uemail}', '${req.body.upwdHash}')`
     db.query(query,(err,result)=>
     {
         if(err){
