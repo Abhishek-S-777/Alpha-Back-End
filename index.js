@@ -28,23 +28,10 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-    //   cb(null, uuid.v4() + path.extname(file.originalname));
-    }
-})
-const storage2 = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, './uploads/audio')
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-    //   cb(null, uuid.v4() + path.extname(file.originalname));
     }
 })
   
 const upload = multer({ storage: storage })
-const upload2 = multer({ storage: storage2 })
-
-// const upload = multer({ dest: "uploads/" });
 
 const  multipart  =  require('connect-multiparty');
 const  multipartMiddleware  =  multipart({ uploadDir:  './uploads' });
@@ -84,21 +71,19 @@ app.get('/cover_art',(req,res)=>{
 // Insert into song_base table
 app.post('/song_base',upload.fields(
     [
+
         {name: 'cover_image', maxCount: 1}, 
         {name: 'song_file', maxCount: 1}
+
     ]),(req,res)=>{
-    console.log("Index js line 86",req.body);
     let song_name = req.body.songname;
     let release_date = req.body.dateofrelease;
-    // let filepath = "hsdfhjkds\\";
     let fileCoverPath = req.files.cover_image[0].path;
     let newCoverFilePath = fileCoverPath.split('\\').join('/');
 
     let songPath = req.files.song_file[0].path;
     let newSongPath = songPath.split('\\').join('/');
 
-    console.log("New Song path",newSongPath)
-    console.log("New cover path",newCoverFilePath)
     let base = __dirname.split('\\').join('/');
 
     
@@ -119,33 +104,6 @@ app.post('/song_base',upload.fields(
      })
 
 })
-// app.post('/song_base',upload.single("cover_image"),(req,res)=>{
-//     console.log("Index js line 86",req.body);
-//     let song_name = req.body.songname;
-//     let release_date = req.body.dateofrelease;
-//     // let filepath = "hsdfhjkds\\";
-//     let filepath = req.file.path;
-//     let newFilePath = filepath.split('\\').join('/');
-//     let base = __dirname.split('\\').join('/');
-
-    
-//     let query = `insert into song_base(song_name, release_date, cover_image, average_rating) values ('${song_name}', '${release_date}', '${newFilePath}', 0)`
-
-//     db.query(query,(err,result)=>{
-//         console.log(err)
-//         console.log(result)
-//         if(err){
-//             console.log(err)
-//         }
-//         else{
-//             res.send({
-//                 message: "Data inserted Successfully",
-//                 data: result
-//             })
-//         }
-//      })
-
-// })
 
 // Get all songs from song_base table..
 app.get('/song_base',(req,res)=>{
@@ -203,8 +161,6 @@ app.get('/song_inner_join',(req,res)=>{
     inner join song_reference
     on song_base.song_id = song_reference.song_id`;
      db.query(query1,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
         if(err){
             console.log(err)
         }
@@ -227,20 +183,13 @@ app.post('/artist_base', upload.single("profile_pic"),(req,res)=>{
     let dateofbirth = req.body.dateofbirth;
     let bio = req.body.biography
     let profile_pic = req.file;
-    // console.log(profile_pic)
     let filepath = req.file.path;
     let newFilePath = filepath.split('\\').join('/');
     let base = __dirname.split('\\').join('/');
-    // console.log("Base dir is", base);
-
-    // console.log(base+'/'+newFilePath);
 
     let query = `insert into artist_base(artist_name, dob, bio, profile_pic, average_rating) values ('${artist_name}', '${dateofbirth}', '${bio}', '${newFilePath}',0)`
 
     db.query(query,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
-
         if(err){
             console.log(err)
         }
@@ -258,8 +207,6 @@ app.post('/artist_base', upload.single("profile_pic"),(req,res)=>{
 app.get('/artist_names',(req,res)=>{
     let query1 = `SELECT artist_id as item_id, artist_name as item_text FROM artist_base`;
      db.query(query1,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
         if(err){
             console.log(err)
         }
@@ -277,8 +224,7 @@ app.get('/artist_names',(req,res)=>{
 app.get('/artist_base_id',(req,res)=>{
     let query1 = `SELECT MAX( artist_id ) as id FROM artist_base`;
      db.query(query1,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
+        
         if(err){
             console.log(err)
         }
@@ -293,9 +239,6 @@ app.get('/artist_base_id',(req,res)=>{
 
 // Insert into artist_reference table
 app.post('/artist_reference', async (req,res)=>{
-    // console.log("Artist reference node js called")
-    // console.log(req.body.songname);
-    // let artists = req.body.artists;
 
     req.body.artists.forEach(element => {
         // console.log(element.item_text);
@@ -312,8 +255,7 @@ app.get('/artist_inner_join',(req,res)=>{
     inner join artist_reference
     on artist_base.artist_id = artist_reference.artist_id`;
      db.query(query1,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
+      
         if(err){
             console.log(err)
         }
@@ -343,7 +285,26 @@ app.post('/user_base', (req,res)=>{
                 message: "Signup",
                 data: result
             })
-            // console.log(result)
+        }
+
+    })
+        
+})
+
+// Get all user data..
+app.get('/user_base_get', (req,res)=>{
+    // console.log("User sign up called ")
+    let query = `select * from user_base`
+    db.query(query,(err,result)=>
+    {
+        if(err){
+            console.log(err)
+        }
+        else{
+            res.send({
+                message: "All User Data",
+                data: result
+            })
         }
 
     })
@@ -354,8 +315,7 @@ app.post('/user_base', (req,res)=>{
 app.get('/user_base_id',(req,res)=>{
     let query1 = `SELECT MAX( userid ) as id FROM user_base`;
      db.query(query1,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
+        
         if(err){
             console.log(err)
         }
@@ -374,8 +334,7 @@ app.get('/user_base_login',(req,res)=>{
     // console.log(queryObject.email);
     let query1 = `select * from user_base where uemail = '${queryObject.email}'`;
      db.query(query1,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
+    
         if(err){
             console.log(err)
         }
@@ -394,8 +353,7 @@ app.get('/user_reference_ratings',(req,res)=>{
     console.log(queryObject.uid);
     let query1 = `select * from user_reference where userid = ${queryObject.uid}`;
      db.query(query1,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
+       
         if(err){
             console.log(err)
         }
@@ -417,8 +375,7 @@ app.post('/user_reference', (req,res)=>{
     // Get all the song IDs..
     let query = `SELECT * FROM user_reference`;
     db.query(query,(err,result)=>{
-    //    console.log(err)
-    //    console.log(result)
+   
        if(err){
         console.log(err)
        }
@@ -544,8 +501,7 @@ app.get('/user_reference_artist_ratings',(req,res)=>{
     console.log(queryObject.uid);
     let query1 = `select * from user_reference_artist where userid = ${queryObject.uid}`;
      db.query(query1,(err,result)=>{
-        // console.log(err)
-        // console.log(result)
+        
         if(err){
             console.log(err)
         }
@@ -567,8 +523,7 @@ app.post('/user_reference_artist', (req,res)=>{
     // Get all the song IDs..
     let query = `SELECT * FROM user_reference_artist`;
     db.query(query,(err,result)=>{
-    //    console.log(err)
-    //    console.log(result)
+    
        if(err){
         console.log(err)
        }
@@ -640,9 +595,6 @@ app.post('/user_reference_artist', (req,res)=>{
                 }
             })
         }
-
-
-
        }
     })
 })
